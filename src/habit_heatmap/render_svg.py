@@ -9,6 +9,9 @@ from .colors import THEMES, bucket_color
 CELL_SIZE = 11
 CELL_GAP = 3
 MARGIN = 20
+WEEKDAY_LABEL_WIDTH = 26
+WEEKDAY_LABELS = {1: "Mon", 3: "Wed", 5: "Fri"}  # Sunday = 0
+FONT = "font-family=\"sans-serif\" font-size=\"9\" fill=\"#767676\""
 
 
 def _week_start(day: date) -> date:
@@ -46,8 +49,10 @@ def render_svg(
     weeks = (total_days + 6) // 7
 
     stride = cell_size + gap
-    width = MARGIN * 2 + weeks * stride
-    height = MARGIN * 2 + 7 * stride
+    grid_x0 = MARGIN + WEEKDAY_LABEL_WIDTH
+    grid_y0 = MARGIN
+    width = grid_x0 + weeks * stride + MARGIN
+    height = grid_y0 + 7 * stride + MARGIN
 
     cells = []
     day = grid_start
@@ -55,8 +60,8 @@ def render_svg(
         if day >= start:
             week_index = (day - grid_start).days // 7
             weekday = (day.weekday() + 1) % 7  # Sunday = 0
-            x = MARGIN + week_index * stride
-            y = MARGIN + weekday * stride
+            x = grid_x0 + week_index * stride
+            y = grid_y0 + weekday * stride
             value = counts.get(day, 0.0)
             color = bucket_color(value, max_value, palette)
             cells.append(
@@ -65,7 +70,12 @@ def render_svg(
             )
         day += timedelta(days=1)
 
-    body = "\n  ".join(cells)
+    labels = [
+        f'<text x="{MARGIN}" y="{grid_y0 + weekday * stride + cell_size - 1}" {FONT}>{text}</text>'
+        for weekday, text in WEEKDAY_LABELS.items()
+    ]
+
+    body = "\n  ".join(labels + cells)
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
         f'viewBox="0 0 {width} {height}">\n  {body}\n</svg>\n'
