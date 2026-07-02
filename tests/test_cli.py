@@ -86,6 +86,47 @@ def test_cli_rejects_invalid_week_start(tmp_path):
     assert not output.exists()
 
 
+def test_cli_is_silent_by_default(tmp_path):
+    output = tmp_path / "heatmap.svg"
+    result = subprocess.run(
+        [sys.executable, "-m", "habit_heatmap", str(FIXTURE), "-o", str(output)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stderr == ""
+
+
+def test_cli_verbose_prints_wrote_message(tmp_path):
+    output = tmp_path / "heatmap.svg"
+    result = subprocess.run(
+        [sys.executable, "-m", "habit_heatmap", str(FIXTURE), "-o", str(output), "--verbose"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert f"wrote {output}" in result.stderr
+
+
+def test_cli_rejects_verbose_and_quiet_together(tmp_path):
+    output = tmp_path / "heatmap.svg"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "habit_heatmap",
+            str(FIXTURE),
+            "-o",
+            str(output),
+            "--verbose",
+            "--quiet",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0
+
+
 def test_cli_reports_missing_column(tmp_path):
     output = tmp_path / "heatmap.svg"
     result = subprocess.run(
