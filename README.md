@@ -1,52 +1,63 @@
-# Habit Heatmap
+# Quilt
 
 [![CI](https://github.com/ctkrug/habit-heatmap/actions/workflows/ci.yml/badge.svg)](https://github.com/ctkrug/habit-heatmap/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
 
-Generate a GitHub-style contribution heatmap (SVG or PNG) from **any** CSV of dated
-events — habit trackers, workout logs, git history exports, sleep data, whatever has a
-date column.
+**Any CSV, stitched into a year of squares.** Quilt turns a spreadsheet of dated
+events into the GitHub contribution grid you already know how to read: one command,
+one SVG (or PNG), no account, no server.
+
+> The tool installs as the `habit-heatmap` CLI and Python package.
 
 ```
-python -m habit_heatmap workouts.csv -o heatmap.svg
+habit-heatmap workouts.csv -o heatmap.svg --value-col minutes --label "Workout minutes"
 ```
 
 ![example heatmap](docs/example.svg)
 
-## Why
+## Who it's for
 
-GitHub's contribution graph is a great shape for "did I do the thing" data, but it's
-locked to commits. Habit Heatmap takes the same visual language and points it at any
-CSV: meditation streaks, reading logs, gym check-ins, mood ratings — anything with a
-date and (optionally) a value.
+You track a habit in a spreadsheet: gym sessions, meditation minutes, pages read,
+mood, sleep, days sober. GitHub's contribution graph is the perfect picture of "did
+I show up," but it only ever draws your commits. Quilt points that exact grid at your
+own CSV, so your streaks look as legible as your green squares at work.
 
-## Features
+It also drops straight into a dashboard, blog post, or README when you want one
+heatmap without pulling in a charting library.
 
-- **Any CSV in — or any rows.** Point it at a date column and (optionally) a numeric
-  value column; rows are aggregated per day automatically. Reads from a file, from
-  stdin (`-`), or from an in-memory iterable of dicts via `load_events_from_rows`.
-- **Flexible dates.** Bare dates, ISO 8601 timestamps (`Z`/offset-aware or naive), and
-  a `--tz` option to normalize before bucketing into days.
-- **SVG by default, PNG on request.** SVG output is dependency-free; PNG rasterization
-  is an opt-in extra.
-- **Themeable.** Ships with GitHub-green plus four alternate palettes (`blue`, `purple`,
-  `mono`, `dark`); themes are just a 5-color tuple, easy to extend.
-- **Labeled grid.** Month labels above, Mon/Wed/Fri weekday labels beside, and a
-  "Less ... More" legend below — reads like the reference it's imitating.
-- **Library or CLI.** Use `habit_heatmap.load_events` / `render_svg` directly from
-  Python, or drive it from the command line.
-- **No server, no accounts.** A single Python process reads a CSV and writes an image.
+## What you get
+
+- **Any date column becomes a grid.** Point Quilt at your date column and, if you
+  want intensity, a numeric column to sum per day. Rows are counted or totaled per
+  calendar day automatically.
+- **Reads real-world exports.** Bare dates, `YYYY/MM/DD`, `MM/DD/YYYY`, and full ISO
+  8601 timestamps all parse without configuration. A `--tz` flag rebuckets UTC
+  timestamps into your own day boundaries before counting.
+- **SVG by default, PNG on request.** The SVG path has zero dependencies and embeds
+  straight into Markdown or a web page. Ask for a `.png` and Quilt rasterizes it
+  through the optional `png` extra.
+- **Five built-in themes.** `github`, `blue`, `purple`, `mono` for print, and `dark`
+  for embedding on a dark page. A theme is a five-color tuple, so adding your own is
+  one line.
+- **A real Python library, not just a CLI.** `load_events` and `render_svg` are the
+  public API; the command line is a thin wrapper. Feed it a CSV, stdin, or an
+  iterable of rows straight from a database query.
+- **Reads like the reference.** Month labels across the top, Mon/Wed/Fri down the
+  side, a "Less ... More" legend below, and a hover tooltip on every day.
 
 ## Install
 
-```
-pip install habit-heatmap
-```
-
-For PNG export:
+Quilt runs on Python 3.9 or newer. Install it straight from GitHub:
 
 ```
-pip install "habit-heatmap[png]"
+pip install "git+https://github.com/ctkrug/habit-heatmap.git"
+```
+
+For PNG output, add the `png` extra (it pulls in `cairosvg`):
+
+```
+pip install "habit-heatmap[png] @ git+https://github.com/ctkrug/habit-heatmap.git"
 ```
 
 ## Usage
@@ -68,26 +79,28 @@ counts = load_events("events.csv", value_col="minutes")
 svg = render_svg(counts, theme="blue", label="Workouts")
 ```
 
-Piping data in or out — `-` means stdin for the CSV argument and stdout for `-o`:
+Pipe data in or out. A `-` means stdin for the CSV argument and stdout for `-o`:
 
 ```
 cat workouts.csv | habit-heatmap - -o heatmap.svg
 habit-heatmap workouts.csv -o - | display
 ```
 
+Already have the data in Python? Skip the file entirely:
+
 ```python
 from habit_heatmap import load_events_from_rows
 
-# rows can come from anywhere — a DB cursor, an API response, etc.
+# rows can come from anywhere: a DB cursor, an API response, a generator
 counts = load_events_from_rows(db.query("SELECT logged_at AS date, minutes FROM sets"))
 ```
 
 ### Themes
 
-Built in: `github`, `blue`, `purple`, `mono` (grayscale), `dark` (for embedding on a
-dark-mode page) — see [`docs/GALLERY.md`](docs/GALLERY.md) for all five rendered
-side by side. To add your own, register a 5-color tuple — lightest (no activity)
-to darkest (busiest) — in `habit_heatmap.colors.THEMES`:
+Built in: `github`, `blue`, `purple`, `mono` (grayscale), and `dark` (for a dark-mode
+page). See [`docs/GALLERY.md`](docs/GALLERY.md) for all five rendered against the same
+data. To add your own, register a five-color tuple, lightest (no activity) to darkest
+(busiest):
 
 ```python
 from habit_heatmap.colors import THEMES
@@ -101,24 +114,36 @@ Then pass `theme="sunset"` to `render_svg` or `--theme sunset` on the CLI.
 
 | Flag | Purpose |
 | --- | --- |
-| `--week-start {sunday,monday}` | First weekday of each grid column (default: `sunday`) |
+| `--date-col NAME` | Date column name (default: `date`) |
+| `--value-col NAME` | Numeric column to sum per day (default: count rows) |
+| `--date-format FMT` | Explicit `strptime` format for unusual dates |
+| `--tz ZONE` | IANA zone (e.g. `America/Chicago`) to rebucket timestamps into |
+| `--start` / `--end` | Clip the rendered window to `YYYY-MM-DD` bounds |
+| `--theme NAME` | One of the five built-in palettes |
+| `--label TEXT` | Title rendered above the grid |
+| `--week-start {sunday,monday}` | First weekday of each column (default: `sunday`) |
 | `--verbose` | Print the `wrote <path>` confirmation (silent by default) |
-| `--quiet` | Explicit no-op spelling of the default; mutually exclusive with `--verbose` |
 | `--version` | Print the installed version and exit |
 
-See `habit-heatmap --help` for the full list, including `--date-format`, `--start`/`--end`,
-and everything else covered above.
+Run `habit-heatmap --help` for the full list.
 
-See [`docs/COOKBOOK.md`](docs/COOKBOOK.md) for recipes (git history, app
-exports, spreadsheet time logs), [`docs/VISION.md`](docs/VISION.md) for the
-design rationale, and [`docs/BACKLOG.md`](docs/BACKLOG.md) for the planned
-roadmap.
+## Docs
+
+- [`docs/COOKBOOK.md`](docs/COOKBOOK.md) turns common data into a heatmap: git commit
+  history, a habit-app export, a spreadsheet time log.
+- [`docs/GALLERY.md`](docs/GALLERY.md) shows every theme side by side.
+- [`docs/VISION.md`](docs/VISION.md) explains the design decisions.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) maps the code for contributors.
 
 ## Stack
 
-Pure-Python (stdlib CSV/argparse for the core), with `cairosvg` as an optional
-dependency for PNG export. No runtime dependencies for the SVG path.
+Pure Python for the core: the CSV parser and SVG renderer have no runtime
+dependencies. PNG export is an opt-in extra backed by `cairosvg`.
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE).
+MIT. See [`LICENSE`](LICENSE).
+
+---
+
+More of Charlie's projects → https://apps.charliekrug.com
