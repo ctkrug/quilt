@@ -41,3 +41,19 @@ def test_render_svg_includes_weekday_labels():
     assert ">Wed<" in svg
     assert ">Fri<" in svg
     assert ">Sun<" not in svg
+
+
+def test_render_svg_labels_the_start_month_not_the_padding_days():
+    # Jan 1 2024 is a Monday, so the grid's leading week is padded with the
+    # last Sunday of December; the label should still say Jan, not Dec.
+    counts = {date(2024, 1, 1): 1}
+    svg = render_svg(counts)
+    assert ">Jan<" in svg
+    assert ">Dec<" not in svg
+
+
+def test_render_svg_labels_each_month_spanned():
+    counts = {date(2024, 1, 1): 1, date(2024, 6, 15): 3, date(2024, 12, 31): 5}
+    svg = render_svg(counts)
+    for month in ("Jan", "Jun", "Dec"):
+        assert f">{month}<" in svg
