@@ -18,7 +18,8 @@ LEGEND_LESS_WIDTH = 24
 LEGEND_MORE_WIDTH = 28
 LEGEND_SWATCH_GAP = 2
 TITLE_HEIGHT = 22
-WEEKDAY_LABELS = {1: "Mon", 3: "Wed", 5: "Fri"}  # Sunday = 0
+WEEK_START_WEEKDAYS = {"sunday": 6, "monday": 0}  # date.weekday(): Monday=0 ... Sunday=6
+WEEKDAY_LABEL_TEXT = {0: "Mon", 2: "Wed", 4: "Fri"}  # date.weekday() of each labeled day
 MONTH_NAMES = (
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
@@ -27,9 +28,20 @@ FONT = "font-family=\"sans-serif\" font-size=\"9\" fill=\"#767676\""
 TITLE_FONT = 'font-family="sans-serif" font-size="14" font-weight="600" fill="#24292f"'
 
 
-def _week_start(day: date) -> date:
-    """Return the Sunday on or before ``day`` (weeks run Sun-Sat, GitHub-style)."""
-    return day - timedelta(days=(day.weekday() + 1) % 7)
+def _week_start(day: date, start_weekday: int) -> date:
+    """Return the first day of ``day``'s week, where a week begins on
+    ``start_weekday`` (Python's ``date.weekday()`` numbering: Monday=0)."""
+    return day - timedelta(days=(day.weekday() - start_weekday) % 7)
+
+
+def _weekday_labels(start_weekday: int, grid_y0: int, stride: int, cell_size: int) -> list[str]:
+    """Build the Mon/Wed/Fri labels beside the grid, positioned by row."""
+    labels = []
+    for py_weekday, text in WEEKDAY_LABEL_TEXT.items():
+        row = (py_weekday - start_weekday) % 7
+        y = grid_y0 + row * stride + cell_size - 1
+        labels.append(f'<text x="{MARGIN}" y="{y}" {FONT}>{text}</text>')
+    return labels
 
 
 def _month_labels(
@@ -84,6 +96,7 @@ def render_svg(
     gap: int = CELL_GAP,
     legend: bool = True,
     label: str | None = None,
+    week_start: str = "sunday",
 ) -> str:
     """Render ``counts`` as a self-contained SVG contribution heatmap.
 
@@ -91,10 +104,13 @@ def render_svg(
     ``counts``; pass ``start``/``end`` to render an explicit range
     (required if ``counts`` is empty). Pass ``legend=False`` to omit the
     "Less ... More" color-scale strip below the grid, or ``label`` to
-    render a title above the chart.
+    render a title above the chart. ``week_start`` is ``"sunday"``
+    (GitHub-style) or ``"monday"`` (ISO week convention).
     """
     if not counts and (start is None or end is None):
         raise ValueError("counts is empty; pass explicit start and end dates")
+    if week_start not in WEEK_START_WEEKDAYS:
+        raise ValueError(f"week_start must be one of {sorted(WEEK_START_WEEKDAYS)}")
 
     end = end or max(counts)
     start = start or min(counts)
@@ -103,8 +119,9 @@ def render_svg(
 
     palette = THEMES.get(theme, THEMES["github"])
     max_value = max(counts.values()) if counts else 0.0
+    start_weekday = WEEK_START_WEEKDAYS[week_start]
 
-    grid_start = _week_start(start)
+    grid_start = _week_start(start, start_weekday)
     total_days = (end - grid_start).days + 1
     weeks = (total_days + 6) // 7
 
@@ -119,7 +136,7 @@ def render_svg(
     while day <= end:
         if day >= start:
             week_index = (day - grid_start).days // 7
-            weekday = (day.weekday() + 1) % 7  # Sunday = 0
+            weekday = (day.weekday() - start_weekday) % 7
             x = grid_x0 + week_index * stride
             y = grid_y0 + weekday * stride
             value = counts.get(day, 0.0)
@@ -130,10 +147,7 @@ def render_svg(
             )
         day += timedelta(days=1)
 
-    weekday_labels = [
-        f'<text x="{MARGIN}" y="{grid_y0 + weekday * stride + cell_size - 1}" {FONT}>{text}</text>'
-        for weekday, text in WEEKDAY_LABELS.items()
-    ]
+    weekday_labels = _weekday_labels(start_weekday, grid_y0, stride, cell_size)
     month_labels = _month_labels(grid_start, start, weeks, stride, grid_x0, grid_y0 - 4)
     legend_elements = (
         _legend(palette, grid_x0, grid_y0 + 7 * stride + (LEGEND_HEIGHT - cell_size), cell_size)
