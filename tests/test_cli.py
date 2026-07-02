@@ -157,3 +157,45 @@ def test_cli_reports_missing_column(tmp_path):
     )
     assert result.returncode != 0
     assert not output.exists()
+
+
+def test_cli_rejects_invalid_theme(tmp_path):
+    output = tmp_path / "heatmap.svg"
+    result = subprocess.run(
+        [sys.executable, "-m", "habit_heatmap", str(FIXTURE), "-o", str(output), "--theme", "neon"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0
+    assert not output.exists()
+    assert "invalid choice" in result.stderr
+
+
+def test_cli_reports_unparseable_date_without_a_traceback(tmp_path):
+    bad_csv = tmp_path / "bad.csv"
+    bad_csv.write_text("date,value\nnot-a-date,1\n")
+    output = tmp_path / "heatmap.svg"
+    result = subprocess.run(
+        [sys.executable, "-m", "habit_heatmap", str(bad_csv), "-o", str(output)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1
+    assert not output.exists()
+    assert "Traceback" not in result.stderr
+    assert "habit-heatmap: error:" in result.stderr
+
+
+def test_cli_reports_empty_range_without_a_traceback(tmp_path):
+    empty_csv = tmp_path / "empty.csv"
+    empty_csv.write_text("date,value\n")
+    output = tmp_path / "heatmap.svg"
+    result = subprocess.run(
+        [sys.executable, "-m", "habit_heatmap", str(empty_csv), "-o", str(output)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1
+    assert not output.exists()
+    assert "Traceback" not in result.stderr
+    assert "habit-heatmap: error:" in result.stderr
