@@ -20,7 +20,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="habit-heatmap",
         description="Generate a GitHub-style contribution heatmap from a CSV of dated events.",
     )
-    parser.add_argument("csv", help="path to the input CSV file")
+    parser.add_argument("csv", help="path to the input CSV file, or - to read from stdin")
     parser.add_argument("-o", "--output", required=True, help="output file path (.svg or .png)")
     parser.add_argument("--date-col", default="date", help="date column name (default: date)")
     parser.add_argument(
