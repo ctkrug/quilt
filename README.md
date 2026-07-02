@@ -26,8 +26,10 @@ date and (optionally) a value.
   rows are aggregated per day automatically.
 - **SVG by default, PNG on request.** SVG output is dependency-free; PNG rasterization
   is an opt-in extra.
-- **Themeable.** Ships with GitHub-green plus a couple of alternate palettes; themes
-  are just a 5-color tuple, easy to extend.
+- **Themeable.** Ships with GitHub-green plus four alternate palettes (`blue`, `purple`,
+  `mono`, `dark`); themes are just a 5-color tuple, easy to extend.
+- **Labeled grid.** Month labels above, Mon/Wed/Fri weekday labels beside, and a
+  "Less ... More" legend below — reads like the reference it's imitating.
 - **Library or CLI.** Use `habit_heatmap.load_events` / `render_svg` directly from
   Python, or drive it from the command line.
 - **No server, no accounts.** A single Python process reads a CSV and writes an image.
@@ -50,7 +52,8 @@ pip install "habit-heatmap[png]"
 habit-heatmap events.csv -o heatmap.svg \
   --date-col date \
   --value-col minutes \
-  --theme blue
+  --theme blue \
+  --label "Workouts"
 ```
 
 As a library:
@@ -59,8 +62,22 @@ As a library:
 from habit_heatmap import load_events, render_svg
 
 counts = load_events("events.csv", value_col="minutes")
-svg = render_svg(counts, theme="blue")
+svg = render_svg(counts, theme="blue", label="Workouts")
 ```
+
+### Themes
+
+Built in: `github`, `blue`, `purple`, `mono` (grayscale), `dark` (for embedding on a
+dark-mode page). To add your own, register a 5-color tuple — lightest (no activity)
+to darkest (busiest) — in `habit_heatmap.colors.THEMES`:
+
+```python
+from habit_heatmap.colors import THEMES
+
+THEMES["sunset"] = ("#fff5eb", "#fdbe85", "#fd8d3c", "#e6550d", "#a63603")
+```
+
+Then pass `theme="sunset"` to `render_svg` or `--theme sunset` on the CLI.
 
 See [`docs/VISION.md`](docs/VISION.md) for the design rationale and
 [`docs/BACKLOG.md`](docs/BACKLOG.md) for the planned roadmap.
