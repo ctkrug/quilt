@@ -1,8 +1,15 @@
+import re
 from datetime import date
 
 import pytest
 
 from habit_heatmap.render_svg import render_svg
+
+
+def _rect_y(svg: str, day: str) -> int:
+    match = re.search(rf'<rect x="\d+" y="(\d+)"[^>]*><title>{day}:', svg)
+    assert match, f"no rect found for {day}"
+    return int(match.group(1))
 
 
 def test_render_svg_produces_one_rect_per_day():
@@ -85,3 +92,22 @@ def test_render_svg_renders_and_escapes_title():
     svg = render_svg(counts, label="Reading <streak> & more")
     assert "Reading &lt;streak&gt; &amp; more" in svg
     assert "<streak>" not in svg
+
+
+def test_render_svg_week_start_defaults_to_sunday():
+    counts = {date(2024, 1, 1): 1}
+    default_svg = render_svg(counts, legend=False)
+    explicit_svg = render_svg(counts, legend=False, week_start="sunday")
+    assert _rect_y(default_svg, "2024-01-01") == _rect_y(explicit_svg, "2024-01-01")
+
+
+def test_render_svg_week_start_monday_moves_monday_to_the_top_row():
+    counts = {date(2024, 1, 1): 1}  # a Monday
+    sunday_start = render_svg(counts, legend=False, week_start="sunday")
+    monday_start = render_svg(counts, legend=False, week_start="monday")
+    assert _rect_y(monday_start, "2024-01-01") < _rect_y(sunday_start, "2024-01-01")
+
+
+def test_render_svg_rejects_unknown_week_start():
+    with pytest.raises(ValueError):
+        render_svg({date(2024, 1, 1): 1}, week_start="tuesday")
