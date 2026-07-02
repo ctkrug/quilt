@@ -13,7 +13,13 @@ from .render_svg import render_svg
 from .version import __version__
 
 
-def _parse_iso_date(raw: str) -> date:
+def iso_date(raw: str) -> date:
+    """argparse ``type=`` callable for a YYYY-MM-DD flag value.
+
+    Named without a leading underscore so argparse's error message
+    ("invalid iso_date value: ...") reads cleanly instead of exposing
+    a private helper's name.
+    """
     return datetime.strptime(raw, "%Y-%m-%d").date()
 
 
@@ -40,10 +46,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="IANA zone (e.g. America/Chicago) to normalize timestamps to before bucketing",
     )
     parser.add_argument(
-        "--start", type=_parse_iso_date, default=None, help="first day to render (YYYY-MM-DD)"
+        "--start", type=iso_date, default=None, help="first day to render (YYYY-MM-DD)"
     )
     parser.add_argument(
-        "--end", type=_parse_iso_date, default=None, help="last day to render (YYYY-MM-DD)"
+        "--end", type=iso_date, default=None, help="last day to render (YYYY-MM-DD)"
     )
     parser.add_argument(
         "--theme",
