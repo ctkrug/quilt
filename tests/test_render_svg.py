@@ -57,3 +57,17 @@ def test_render_svg_labels_each_month_spanned():
     svg = render_svg(counts)
     for month in ("Jan", "Jun", "Dec"):
         assert f">{month}<" in svg
+
+
+def test_render_svg_includes_legend_by_default():
+    counts = {date(2024, 1, 1): 1}
+    svg = render_svg(counts)
+    assert ">Less<" in svg
+    assert ">More<" in svg
+
+
+def test_render_svg_legend_can_be_disabled():
+    counts = {date(2024, 1, 1): 1}
+    svg = render_svg(counts, legend=False)
+    assert ">Less<" not in svg
+    assert ">More<" not in svg
