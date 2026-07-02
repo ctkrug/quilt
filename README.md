@@ -95,6 +95,18 @@ THEMES["sunset"] = ("#fff5eb", "#fdbe85", "#fd8d3c", "#e6550d", "#a63603")
 
 Then pass `theme="sunset"` to `render_svg` or `--theme sunset` on the CLI.
 
+### CLI flags
+
+| Flag | Purpose |
+| --- | --- |
+| `--week-start {sunday,monday}` | First weekday of each grid column (default: `sunday`) |
+| `--verbose` | Print the `wrote <path>` confirmation (silent by default) |
+| `--quiet` | Explicit no-op spelling of the default; mutually exclusive with `--verbose` |
+| `--version` | Print the installed version and exit |
+
+See `habit-heatmap --help` for the full list, including `--date-format`, `--start`/`--end`,
+and everything else covered above.
+
 See [`docs/VISION.md`](docs/VISION.md) for the design rationale and
 [`docs/BACKLOG.md`](docs/BACKLOG.md) for the planned roadmap.
 
