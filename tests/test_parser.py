@@ -1,3 +1,4 @@
+import io
 from datetime import date
 from pathlib import Path
 
@@ -65,3 +66,9 @@ def test_load_events_assumes_utc_for_naive_timestamps_with_tz(tmp_path):
     csv_path.write_text("date,value\n2024-01-01T23:30:00,1\n")
     counts = load_events(csv_path, tz="America/Chicago")
     assert counts == {date(2024, 1, 1): 1.0}
+
+
+def test_load_events_reads_from_stdin(monkeypatch):
+    monkeypatch.setattr("sys.stdin", io.StringIO("date,value\n2024-01-01,1\n2024-01-01,2\n"))
+    counts = load_events("-", value_col="value")
+    assert counts == {date(2024, 1, 1): 3.0}
