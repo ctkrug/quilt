@@ -7,6 +7,19 @@ import pytest
 from habit_heatmap.parser import load_events, load_events_from_rows
 
 FIXTURE = Path(__file__).parent / "fixtures" / "sample.csv"
+EXAMPLES_DIR = Path(__file__).parent.parent / "examples"
+
+
+@pytest.mark.parametrize(
+    ("filename", "value_col"),
+    [("workouts.csv", "minutes"), ("mood.csv", "rating")],
+)
+def test_shipped_example_csvs_parse_cleanly(filename, value_col):
+    # The README, cookbook, and gallery docs all point at these files, so a
+    # regression here would silently break the documented examples.
+    counts = load_events(EXAMPLES_DIR / filename, value_col=value_col)
+    assert counts
+    assert all(value > 0 for value in counts.values())
 
 
 def test_load_events_counts_rows_by_default():
