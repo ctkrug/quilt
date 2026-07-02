@@ -93,7 +93,7 @@ def main(argv: list[str] | None = None) -> int:
             svg_to_png(svg, str(output))
         else:
             output.write_text(svg, encoding="utf-8")
-    except (ValueError, OSError, RuntimeError) as exc:
+    except (ValueError, OSError, RuntimeError, LookupError) as exc:
         print(f"habit-heatmap: error: {exc}", file=sys.stderr)
         return 1
 
