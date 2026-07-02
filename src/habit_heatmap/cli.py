@@ -26,7 +26,9 @@ def build_parser() -> argparse.ArgumentParser:
         "--version", action="version", version=f"%(prog)s {__version__}"
     )
     parser.add_argument("csv", help="path to the input CSV file, or - to read from stdin")
-    parser.add_argument("-o", "--output", required=True, help="output file path (.svg or .png)")
+    parser.add_argument(
+        "-o", "--output", required=True, help="output file path (.svg or .png), or - for stdout"
+    )
     parser.add_argument("--date-col", default="date", help="date column name (default: date)")
     parser.add_argument(
         "--value-col", default=None, help="numeric column to sum per day (default: count rows)"
@@ -86,19 +88,22 @@ def main(argv: list[str] | None = None) -> int:
             week_start=args.week_start,
         )
 
-        output = Path(args.output)
-        if output.suffix.lower() == ".png":
-            from .render_png import svg_to_png
-
-            svg_to_png(svg, str(output))
+        if args.output == "-":
+            sys.stdout.write(svg)
         else:
-            output.write_text(svg, encoding="utf-8")
+            output = Path(args.output)
+            if output.suffix.lower() == ".png":
+                from .render_png import svg_to_png
+
+                svg_to_png(svg, str(output))
+            else:
+                output.write_text(svg, encoding="utf-8")
     except (ValueError, OSError, RuntimeError, LookupError) as exc:
         print(f"habit-heatmap: error: {exc}", file=sys.stderr)
         return 1
 
     if args.verbose:
-        print(f"wrote {output}", file=sys.stderr)
+        print(f"wrote {args.output}", file=sys.stderr)
     return 0
 
 

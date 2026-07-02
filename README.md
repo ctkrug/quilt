@@ -68,10 +68,11 @@ counts = load_events("events.csv", value_col="minutes")
 svg = render_svg(counts, theme="blue", label="Workouts")
 ```
 
-Piping data in, or reading from something other than a CSV file:
+Piping data in or out — `-` means stdin for the CSV argument and stdout for `-o`:
 
 ```
 cat workouts.csv | habit-heatmap - -o heatmap.svg
+habit-heatmap workouts.csv -o - | display
 ```
 
 ```python

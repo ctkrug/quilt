@@ -159,6 +159,18 @@ def test_cli_reports_missing_column(tmp_path):
     assert not output.exists()
 
 
+def test_cli_writes_svg_to_stdout_when_output_is_dash(tmp_path):
+    result = subprocess.run(
+        [sys.executable, "-m", "habit_heatmap", str(FIXTURE), "-o", "-"],
+        capture_output=True,
+        text=True,
+        cwd=tmp_path,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.startswith("<svg")
+    assert not (tmp_path / "-").exists()
+
+
 def test_cli_rejects_invalid_theme(tmp_path):
     output = tmp_path / "heatmap.svg"
     result = subprocess.run(
