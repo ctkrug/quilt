@@ -8,6 +8,8 @@ date column.
 python -m habit_heatmap workouts.csv -o heatmap.svg
 ```
 
+![example heatmap](docs/example.svg)
+
 ## Why
 
 GitHub's contribution graph is a great shape for "did I do the thing" data, but it's
