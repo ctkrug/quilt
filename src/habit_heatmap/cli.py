@@ -9,6 +9,7 @@ from pathlib import Path
 
 from .parser import load_events
 from .render_svg import render_svg
+from .version import __version__
 
 
 def _parse_iso_date(raw: str) -> date:
@@ -19,6 +20,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="habit-heatmap",
         description="Generate a GitHub-style contribution heatmap from a CSV of dated events.",
+    )
+    parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {__version__}"
     )
     parser.add_argument("csv", help="path to the input CSV file, or - to read from stdin")
     parser.add_argument("-o", "--output", required=True, help="output file path (.svg or .png)")
