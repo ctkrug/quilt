@@ -10,13 +10,47 @@ CELL_SIZE = 11
 CELL_GAP = 3
 MARGIN = 20
 WEEKDAY_LABEL_WIDTH = 26
+MONTH_LABEL_HEIGHT = 16
+MONTH_LABEL_MIN_GAP_WEEKS = 2
 WEEKDAY_LABELS = {1: "Mon", 3: "Wed", 5: "Fri"}  # Sunday = 0
+MONTH_NAMES = (
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+)
 FONT = "font-family=\"sans-serif\" font-size=\"9\" fill=\"#767676\""
 
 
 def _week_start(day: date) -> date:
     """Return the Sunday on or before ``day`` (weeks run Sun-Sat, GitHub-style)."""
     return day - timedelta(days=(day.weekday() + 1) % 7)
+
+
+def _month_labels(
+    grid_start: date, start: date, weeks: int, stride: int, x0: int, y: int
+) -> list[str]:
+    """Build a month-name label for each week column where a new month begins.
+
+    The leading week may start before ``start`` (grid weeks are padded out
+    to a full Sun-Sat row), so its label uses ``start``'s month rather than
+    the padding days'. Skips a label that would land within
+    ``MONTH_LABEL_MIN_GAP_WEEKS`` of the previous one, so short months don't
+    produce overlapping text.
+    """
+    labels = []
+    last_labeled_week = -MONTH_LABEL_MIN_GAP_WEEKS
+    last_month = None
+    for week_index in range(weeks):
+        sunday = grid_start + timedelta(weeks=week_index)
+        month = start.month if week_index == 0 else sunday.month
+        if month == last_month:
+            continue
+        last_month = month
+        if week_index - last_labeled_week < MONTH_LABEL_MIN_GAP_WEEKS:
+            continue
+        last_labeled_week = week_index
+        x = x0 + week_index * stride
+        labels.append(f'<text x="{x}" y="{y}" {FONT}>{MONTH_NAMES[month - 1]}</text>')
+    return labels
 
 
 def render_svg(
@@ -50,7 +84,7 @@ def render_svg(
 
     stride = cell_size + gap
     grid_x0 = MARGIN + WEEKDAY_LABEL_WIDTH
-    grid_y0 = MARGIN
+    grid_y0 = MARGIN + MONTH_LABEL_HEIGHT
     width = grid_x0 + weeks * stride + MARGIN
     height = grid_y0 + 7 * stride + MARGIN
 
@@ -70,12 +104,13 @@ def render_svg(
             )
         day += timedelta(days=1)
 
-    labels = [
+    weekday_labels = [
         f'<text x="{MARGIN}" y="{grid_y0 + weekday * stride + cell_size - 1}" {FONT}>{text}</text>'
         for weekday, text in WEEKDAY_LABELS.items()
     ]
+    month_labels = _month_labels(grid_start, start, weeks, stride, grid_x0, MARGIN + 12)
 
-    body = "\n  ".join(labels + cells)
+    body = "\n  ".join(weekday_labels + month_labels + cells)
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
         f'viewBox="0 0 {width} {height}">\n  {body}\n</svg>\n'
