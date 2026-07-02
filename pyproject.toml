@@ -1,0 +1,29 @@
+[project]
+name = "habit-heatmap"
+version = "0.1.0"
+description = "Generate GitHub-style contribution heatmaps from any CSV of dated events."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Charlie Krug" }]
+requires-python = ">=3.9"
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/ctkrug/habit-heatmap"
+
+[project.optional-dependencies]
+png = ["cairosvg>=2.7"]
+dev = ["pytest>=7.4", "ruff>=0.4"]
+
+[project.scripts]
+habit-heatmap = "habit_heatmap.cli:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
