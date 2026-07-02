@@ -32,3 +32,12 @@ def test_render_svg_requires_explicit_range_when_empty():
 def test_render_svg_rejects_inverted_range():
     with pytest.raises(ValueError):
         render_svg({date(2024, 1, 1): 1}, start=date(2024, 1, 5), end=date(2024, 1, 1))
+
+
+def test_render_svg_includes_weekday_labels():
+    counts = {date(2024, 1, 1): 1}
+    svg = render_svg(counts)
+    assert ">Mon<" in svg
+    assert ">Wed<" in svg
+    assert ">Fri<" in svg
+    assert ">Sun<" not in svg
