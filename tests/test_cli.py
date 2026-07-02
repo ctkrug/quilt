@@ -54,6 +54,18 @@ def test_cli_applies_tz(tmp_path):
     assert "2024-01-02" not in svg
 
 
+def test_cli_reads_from_stdin(tmp_path):
+    output = tmp_path / "heatmap.svg"
+    result = subprocess.run(
+        [sys.executable, "-m", "habit_heatmap", "-", "-o", str(output)],
+        input=FIXTURE.read_text(),
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert output.read_text().startswith("<svg")
+
+
 def test_cli_reports_missing_column(tmp_path):
     output = tmp_path / "heatmap.svg"
     result = subprocess.run(
