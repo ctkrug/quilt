@@ -18,6 +18,11 @@ def _parse_date(raw: str, fmt: str | None = None) -> date:
             return datetime.strptime(raw, candidate).date()
         except ValueError:
             continue
+    if fmt is None:
+        try:
+            return datetime.fromisoformat(raw.replace("Z", "+00:00")).date()
+        except ValueError:
+            pass
     raise ValueError(f"could not parse date {raw!r} with format(s) {formats}")
 
 
