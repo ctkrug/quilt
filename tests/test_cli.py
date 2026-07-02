@@ -2,6 +2,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from habit_heatmap.version import __version__
 
 FIXTURE = Path(__file__).parent / "fixtures" / "sample.csv"
@@ -157,6 +159,18 @@ def test_cli_reports_missing_column(tmp_path):
     )
     assert result.returncode != 0
     assert not output.exists()
+
+
+def test_cli_writes_png_file(tmp_path):
+    pytest.importorskip("cairosvg")
+    output = tmp_path / "heatmap.png"
+    result = subprocess.run(
+        [sys.executable, "-m", "habit_heatmap", str(FIXTURE), "-o", str(output)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert output.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
 
 
 def test_cli_writes_svg_to_stdout_when_output_is_dash(tmp_path):
