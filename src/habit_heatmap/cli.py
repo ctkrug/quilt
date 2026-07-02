@@ -28,6 +28,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--date-format", default=None, help="explicit strptime format for dates")
     parser.add_argument(
+        "--tz",
+        default=None,
+        help="IANA zone (e.g. America/Chicago) to normalize timestamps to before bucketing",
+    )
+    parser.add_argument(
         "--start", type=_parse_iso_date, default=None, help="first day to render (YYYY-MM-DD)"
     )
     parser.add_argument(
@@ -48,6 +53,7 @@ def main(argv: list[str] | None = None) -> int:
         date_col=args.date_col,
         value_col=args.value_col,
         date_format=args.date_format,
+        tz=args.tz,
     )
     svg = render_svg(counts, start=args.start, end=args.end, theme=args.theme, label=args.label)
 
