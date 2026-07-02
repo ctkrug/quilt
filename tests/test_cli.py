@@ -185,6 +185,30 @@ def test_cli_writes_svg_to_stdout_when_output_is_dash(tmp_path):
     assert not (tmp_path / "-").exists()
 
 
+def test_cli_renders_explicit_start_and_end_for_a_dateless_csv(tmp_path):
+    empty_csv = tmp_path / "empty.csv"
+    empty_csv.write_text("date,value\n")
+    output = tmp_path / "heatmap.svg"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "habit_heatmap",
+            str(empty_csv),
+            "-o",
+            str(output),
+            "--start",
+            "2024-01-01",
+            "--end",
+            "2024-01-07",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert output.read_text().count("<title>") == 7  # one day cell per date in range
+
+
 def test_cli_rejects_invalid_theme(tmp_path):
     output = tmp_path / "heatmap.svg"
     result = subprocess.run(
