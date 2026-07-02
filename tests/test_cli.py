@@ -141,6 +141,52 @@ def test_cli_rejects_verbose_and_quiet_together(tmp_path):
     assert result.returncode != 0
 
 
+def test_cli_applies_value_col(tmp_path):
+    csv_path = tmp_path / "events.csv"
+    csv_path.write_text("date,minutes\n2024-01-01,10\n2024-01-01,5\n")
+    output = tmp_path / "heatmap.svg"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "habit_heatmap",
+            str(csv_path),
+            "-o",
+            str(output),
+            "--value-col",
+            "minutes",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "2024-01-01: 15" in output.read_text()
+
+
+def test_cli_applies_week_start_monday(tmp_path):
+    csv_path = tmp_path / "events.csv"
+    csv_path.write_text("date,value\n2024-01-01,1\n")  # a Monday
+    sunday_output = tmp_path / "sunday.svg"
+    monday_output = tmp_path / "monday.svg"
+    for output, week_start in ((sunday_output, "sunday"), (monday_output, "monday")):
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "habit_heatmap",
+                str(csv_path),
+                "-o",
+                str(output),
+                "--week-start",
+                week_start,
+            ],
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, result.stderr
+    assert sunday_output.read_text() != monday_output.read_text()
+
+
 def test_cli_applies_date_format(tmp_path):
     csv_path = tmp_path / "events.csv"
     csv_path.write_text("logged_at,value\n01-Mar-2024,1\n")
