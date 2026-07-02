@@ -16,7 +16,7 @@ src/habit_heatmap/
   __main__.py     # `python -m habit_heatmap` entrypoint -> cli.main
   version.py      # __version__, read by cli.py's --version and pyproject
 tests/
-  test_parser.py, test_colors.py, test_render_svg.py, test_cli.py
+  test_parser.py, test_colors.py, test_render_svg.py, test_render_png.py, test_cli.py
   fixtures/sample.csv
 examples/
   quickstart.py, workouts.csv
@@ -60,10 +60,17 @@ while keeping the standard date/value coercion rules.
   `(date, amount)` or `None` to skip the row.
 - `load_events(csv_path, ...)` — opens `csv_path` (or reads `sys.stdin` if
   `csv_path == "-"`, via `contextlib.nullcontext` so the stream isn't
-  closed), validates `date_col` is a real header, and folds every row
-  through `_row_bucket` into a `defaultdict(float)`.
+  closed; file opens use `utf-8-sig` so an Excel-exported UTF-8 BOM doesn't
+  glue itself onto the first header name), validates `date_col` is a real
+  header, and folds every row through `_row_bucket` into a
+  `defaultdict(float)`.
 - `load_events_from_rows(rows, ...)` — same aggregation over any
   `Iterable[Mapping[str, Any]]`, no file I/O.
+- A blank *or whitespace-only* date/value cell is treated as missing/zero
+  rather than reaching `strptime`/`float()` with an empty string; a date
+  value that's neither a `str` nor a `date`/`datetime` (e.g. a raw int from
+  a DB row) raises a `ValueError` naming the bad type instead of an
+  `AttributeError` from deep inside `_parse_datetime`.
 
 ## `colors.py`
 
@@ -74,11 +81,16 @@ while keeping the standard date/value coercion rules.
 - `bucket_color(value, max_value, palette)` — maps a value into one of the
   palette's 5 buckets, relative to `max_value` (so the busiest day in the
   rendered range is always the darkest cell, regardless of absolute scale).
+  `value <= 0` (or `max_value <= 0`) always maps to the lightest bucket.
 
 ## `render_svg.py`
 
 `render_svg(counts, ...)` composes a handful of independent element
-builders into one `<svg>`:
+builders into one `<svg>`. `theme` and `week_start` are validated against
+`THEMES`/`WEEK_START_WEEKDAYS` and raise `ValueError` on an unknown value —
+no silent fallback. The color scale's `max_value` is computed only from
+`counts` entries that fall within `[start, end]`, so data outside an
+explicit render window can't wash out (or exaggerate) the in-range scale.
 
 - the day grid itself (one `<rect>` per day in `[start, end]`, positioned
   by `(week_index, weekday)` — `weekday` is `(date.weekday() - start_weekday) % 7`,
@@ -102,9 +114,14 @@ and the overall `width`/`height` are computed from that same origin.
 
 Thin `argparse` layer: parses flags, calls `load_events` then
 `render_svg`, writes the result (SVG directly, or via `render_png` if
-`-o` ends in `.png`). Output is silent by default; `--verbose` prints a
-`wrote <path>` confirmation to stderr (`--quiet` is the explicit,
-mutually-exclusive spelling of the default).
+`-o` ends in `.png`; `-o -` writes SVG to stdout instead, mirroring `-`
+for stdin on the CSV argument). Output is silent by default; `--verbose`
+prints a `wrote <path>` confirmation to stderr (`--quiet` is the explicit,
+mutually-exclusive spelling of the default). `--theme` is restricted to
+`THEMES`' keys via argparse `choices`. `main()` wraps the pipeline in a
+single `try/except (ValueError, OSError, RuntimeError, LookupError)` so
+expected failures (bad CSV data, unknown `--tz`, missing `cairosvg`) print
+a one-line `habit-heatmap: error: ...` and exit 1 instead of a traceback.
 
 ## Running it
 
