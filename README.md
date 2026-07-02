@@ -1,5 +1,8 @@
 # Habit Heatmap
 
+[![CI](https://github.com/ctkrug/habit-heatmap/actions/workflows/ci.yml/badge.svg)](https://github.com/ctkrug/habit-heatmap/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Generate a GitHub-style contribution heatmap (SVG or PNG) from **any** CSV of dated
 events — habit trackers, workout logs, git history exports, sleep data, whatever has a
 date column.
