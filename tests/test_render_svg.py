@@ -111,3 +111,11 @@ def test_render_svg_week_start_monday_moves_monday_to_the_top_row():
 def test_render_svg_rejects_unknown_week_start():
     with pytest.raises(ValueError):
         render_svg({date(2024, 1, 1): 1}, week_start="tuesday")
+
+
+def test_render_svg_color_scale_ignores_values_outside_the_range():
+    # A huge value far outside an explicit render window shouldn't wash out
+    # the scale for the day that's actually the busiest *within* the window.
+    counts = {date(2024, 1, 1): 1, date(2024, 6, 1): 100}
+    svg = render_svg(counts, start=date(2024, 1, 1), end=date(2024, 1, 7), legend=False)
+    assert 'fill="#216e39"' in svg  # darkest github green, for Jan 1 within the window

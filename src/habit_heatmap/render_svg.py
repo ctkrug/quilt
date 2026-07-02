@@ -118,7 +118,8 @@ def render_svg(
         raise ValueError("start date must be on or before end date")
 
     palette = THEMES.get(theme, THEMES["github"])
-    max_value = max(counts.values()) if counts else 0.0
+    in_range_values = [value for day, value in counts.items() if start <= day <= end]
+    max_value = max(in_range_values) if in_range_values else 0.0
     start_weekday = WEEK_START_WEEKDAYS[week_start]
 
     grid_start = _week_start(start, start_weekday)
