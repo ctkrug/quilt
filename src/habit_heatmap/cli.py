@@ -42,6 +42,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--theme", default="github", help="color theme: github, blue, purple, mono, or dark"
     )
     parser.add_argument("--label", default=None, help="title rendered above the chart")
+    parser.add_argument(
+        "--week-start",
+        default="sunday",
+        choices=("sunday", "monday"),
+        help="first weekday of each grid column (default: sunday)",
+    )
     return parser
 
 
@@ -55,7 +61,14 @@ def main(argv: list[str] | None = None) -> int:
         date_format=args.date_format,
         tz=args.tz,
     )
-    svg = render_svg(counts, start=args.start, end=args.end, theme=args.theme, label=args.label)
+    svg = render_svg(
+        counts,
+        start=args.start,
+        end=args.end,
+        theme=args.theme,
+        label=args.label,
+        week_start=args.week_start,
+    )
 
     output = Path(args.output)
     if output.suffix.lower() == ".png":
