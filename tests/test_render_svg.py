@@ -113,6 +113,14 @@ def test_render_svg_rejects_unknown_week_start():
         render_svg({date(2024, 1, 1): 1}, week_start="tuesday")
 
 
+def test_render_svg_treats_all_negative_values_as_lightest():
+    # e.g. a "weight change" dataset where every day is a loss.
+    counts = {date(2024, 1, 1): -3, date(2024, 1, 2): -1}
+    svg = render_svg(counts, legend=False)
+    cell_colors = set(re.findall(r'<rect[^>]*fill="(#[0-9a-f]+)"', svg))
+    assert cell_colors == {"#ebedf0"}  # github's lightest/no-activity shade
+
+
 def test_render_svg_rejects_unknown_theme():
     with pytest.raises(ValueError):
         render_svg({date(2024, 1, 1): 1}, theme="neon")
