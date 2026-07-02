@@ -43,9 +43,9 @@ PyPI.
 
 Make it easy for someone to see themselves using this tool.
 
-- [ ] Add a small gallery to `docs/` showing each theme rendered against the
+- [x] Add a small gallery to `docs/` showing each theme rendered against the
       same example dataset
-- [ ] Add a second example dataset in a different domain (e.g. mood ratings
+- [x] Add a second example dataset in a different domain (e.g. mood ratings
       1-5) to show the value-column path isn't just for workout minutes
 - [ ] Write a "cookbook" doc showing common recipes: git commit history,
       a habit-tracking app's CSV export, a spreadsheet time log
