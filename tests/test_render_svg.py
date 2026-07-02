@@ -71,3 +71,17 @@ def test_render_svg_legend_can_be_disabled():
     svg = render_svg(counts, legend=False)
     assert ">Less<" not in svg
     assert ">More<" not in svg
+
+
+def test_render_svg_omits_title_by_default():
+    counts = {date(2024, 1, 1): 1}
+    svg = render_svg(counts)
+    assert "<text" in svg  # weekday/month/legend labels still present
+    assert "font-weight" not in svg  # only the title uses bold text
+
+
+def test_render_svg_renders_and_escapes_title():
+    counts = {date(2024, 1, 1): 1}
+    svg = render_svg(counts, label="Reading <streak> & more")
+    assert "Reading &lt;streak&gt; &amp; more" in svg
+    assert "<streak>" not in svg
