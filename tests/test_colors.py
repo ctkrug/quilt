@@ -23,6 +23,11 @@ def test_bucket_color_handles_zero_max():
     assert bucket_color(0, 0, palette) == palette[0]
 
 
+def test_bucket_color_handles_negative_value():
+    palette = THEMES["github"]
+    assert bucket_color(-5, 10, palette) == palette[0]
+
+
 def test_all_themes_have_five_colors():
     for name, palette in THEMES.items():
         assert len(palette) == 5, name
