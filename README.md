@@ -108,8 +108,10 @@ Then pass `theme="sunset"` to `render_svg` or `--theme sunset` on the CLI.
 See `habit-heatmap --help` for the full list, including `--date-format`, `--start`/`--end`,
 and everything else covered above.
 
-See [`docs/VISION.md`](docs/VISION.md) for the design rationale and
-[`docs/BACKLOG.md`](docs/BACKLOG.md) for the planned roadmap.
+See [`docs/COOKBOOK.md`](docs/COOKBOOK.md) for recipes (git history, app
+exports, spreadsheet time logs), [`docs/VISION.md`](docs/VISION.md) for the
+design rationale, and [`docs/BACKLOG.md`](docs/BACKLOG.md) for the planned
+roadmap.
 
 ## Stack
 
