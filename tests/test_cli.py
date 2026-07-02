@@ -66,6 +66,26 @@ def test_cli_reads_from_stdin(tmp_path):
     assert output.read_text().startswith("<svg")
 
 
+def test_cli_rejects_invalid_week_start(tmp_path):
+    output = tmp_path / "heatmap.svg"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "habit_heatmap",
+            str(FIXTURE),
+            "-o",
+            str(output),
+            "--week-start",
+            "tuesday",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0
+    assert not output.exists()
+
+
 def test_cli_reports_missing_column(tmp_path):
     output = tmp_path / "heatmap.svg"
     result = subprocess.run(
