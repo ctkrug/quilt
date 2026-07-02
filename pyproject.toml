@@ -1,6 +1,6 @@
 [project]
 name = "habit-heatmap"
-version = "0.1.0"
+version = "1.0.0"
 description = "Generate GitHub-style contribution heatmaps from any CSV of dated events."
 readme = "README.md"
 license = { text = "MIT" }
