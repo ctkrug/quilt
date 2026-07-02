@@ -1,10 +1,10 @@
 import io
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 import pytest
 
-from habit_heatmap.parser import load_events
+from habit_heatmap.parser import load_events, load_events_from_rows
 
 FIXTURE = Path(__file__).parent / "fixtures" / "sample.csv"
 
@@ -72,3 +72,24 @@ def test_load_events_reads_from_stdin(monkeypatch):
     monkeypatch.setattr("sys.stdin", io.StringIO("date,value\n2024-01-01,1\n2024-01-01,2\n"))
     counts = load_events("-", value_col="value")
     assert counts == {date(2024, 1, 1): 3.0}
+
+
+def test_load_events_from_rows_accepts_string_dates():
+    rows = [{"date": "2024-01-01", "value": "2"}, {"date": "2024-01-01", "value": "3"}]
+    counts = load_events_from_rows(rows, value_col="value")
+    assert counts == {date(2024, 1, 1): 5.0}
+
+
+def test_load_events_from_rows_accepts_date_and_datetime_objects():
+    rows = [
+        {"date": date(2024, 1, 1), "minutes": 10},
+        {"date": datetime(2024, 1, 1, 20, 0, 0), "minutes": 5},
+    ]
+    counts = load_events_from_rows(rows, value_col="minutes")
+    assert counts == {date(2024, 1, 1): 15.0}
+
+
+def test_load_events_from_rows_skips_rows_without_a_date():
+    rows = [{"date": "2024-01-01"}, {"date": None}, {"date": ""}]
+    counts = load_events_from_rows(rows)
+    assert counts == {date(2024, 1, 1): 1.0}
