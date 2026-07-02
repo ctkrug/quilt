@@ -18,11 +18,11 @@ Make the heatmap itself look and read like the reference it's imitating.
 Widen what counts as "a CSV with a date column" so more real-world exports
 work without preprocessing.
 
-- [ ] Support ISO 8601 datetimes (not just bare dates) by truncating to day
-- [ ] Add a `--tz` option to normalize timestamps to a given timezone before
+- [x] Support ISO 8601 datetimes (not just bare dates) by truncating to day
+- [x] Add a `--tz` option to normalize timestamps to a given timezone before
       bucketing into days
-- [ ] Support reading from stdin (`-` as the CSV path) for pipeline use
-- [ ] Add a `load_events_from_rows()` variant that takes an iterable of dicts
+- [x] Support reading from stdin (`-` as the CSV path) for pipeline use
+- [x] Add a `load_events_from_rows()` variant that takes an iterable of dicts
       directly, for callers who already have parsed data (e.g. a DB query)
       instead of a CSV file
 
