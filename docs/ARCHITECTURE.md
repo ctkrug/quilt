@@ -82,19 +82,33 @@ while keeping the standard date/value coercion rules.
   lightest (no activity) to darkest (busiest). Built in: `github`, `blue`,
   `purple`, `mono`, `dark`. Extending is just adding a key — see the
   README's "Themes" section.
-- `bucket_color(value, max_value, palette)` — maps a value into one of the
-  palette's 5 buckets, relative to `max_value` (so the busiest day in the
-  rendered range is always the darkest cell, regardless of absolute scale).
-  `value <= 0` (or `max_value <= 0`) always maps to the lightest bucket.
+- `resolve_steps(max_value, steps=None)` — returns four color-change
+  boundaries for the five-color palette. With `steps=None`, they are zero,
+  one quarter, one half, and three quarters of the in-range maximum, preserving
+  the original automatic scale. A supplied sequence must contain exactly four
+  positive, finite, strictly increasing absolute threshold values; no
+  interval-width or cumulative interpretation is used.
+- `color_for_steps(value, thresholds, palette)` — maps a value to the five-color
+  palette using those four exact boundaries. A value changes to the next
+  palette color when it reaches a threshold (inclusive); values below the
+  first threshold use the lightest color.
+- `bucket_color(value, max_value, palette, steps=None)` — convenience wrapper
+  retaining automatic scaling by default and accepting the same optional
+  four-threshold sequence.
 
 ## `render_svg.py`
 
 `render_svg(counts, ...)` composes a handful of independent element
 builders into one `<svg>`. `theme` and `week_start` are validated against
 `THEMES`/`WEEK_START_WEEKDAYS` and raise `ValueError` on an unknown value —
-no silent fallback. The color scale's `max_value` is computed only from
-`counts` entries that fall within `[start, end]`, so data outside an
+no silent fallback. The automatic color scale's `max_value` is computed only
+from `counts` entries that fall within `[start, end]`, so data outside an
 explicit render window can't wash out (or exaggerate) the in-range scale.
+Callers can override the automatic boundaries with four exact values via
+`steps=[a, b, c, d]`. The four supplied thresholds divide the values into
+five color bands, one per palette color. Month labels, weekday labels, the optional title, and
+legend text each have independent font-size and color arguments; omitted text
+colors are selected from the theme's background luminance.
 
 - the day grid itself (one `<rect>` per day in `[start, end]`, positioned
   by `(week_index, weekday)` — `weekday` is `(date.weekday() - start_weekday) % 7`,

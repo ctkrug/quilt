@@ -49,17 +49,29 @@ guarding it is worth more than any clever function on either side.
 ## The color scale is relative, on purpose
 
 GitHub's graph shades each day by how busy it was. The naive way to port that is to pick
-five fixed thresholds. The problem shows up the first time a light user runs it: if your
-"a lot" is thirty minutes and the thresholds assume hundreds, your whole year renders
+fixed numeric cutoffs. The problem shows up the first time a light user runs it: if your
+"a lot" is thirty minutes and the cutoffs assume hundreds, your whole year renders
 pale gray and the chart tells you nothing.
 
-So the darkest bucket is always anchored to the busiest day in the range you are actually
-rendering:
+With the default automatic scale, the darkest bucket is anchored to the busiest day in
+the range you are actually rendering:
 
 ```python
 in_range_values = [v for day, v in counts.items() if start <= day <= end]
 max_value = max(in_range_values) if in_range_values else 0.0
 ```
+
+The default relative scale is not mandatory. When I need comparable colors across
+multiple heatmaps, I can supply four absolute color-change thresholds instead:
+
+```python
+svg = render_svg(counts, steps=[5, 20, 50, 100])
+```
+
+Those values are used exactly as written: the five palette colors apply to values
+below 5, from 5 to below 20, from 20 to below 50, from 50 to below 100, and
+100 or above. The four thresholds are not interval widths and are never added
+together. Omitting `steps` keeps the automatic, range-relative scale.
 
 The subtle part is `if start <= day <= end`. If you clip the window with `--start` and
 `--end`, data outside that window must not influence the scale, or one busy month in

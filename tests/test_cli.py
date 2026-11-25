@@ -42,6 +42,46 @@ def test_cli_applies_label(tmp_path):
     assert ">Gym<" in output.read_text()
 
 
+def test_cli_applies_month_and_weekday_label_styles(tmp_path):
+    output = tmp_path / "heatmap.svg"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "habit_heatmap",
+            str(FIXTURE),
+            "-o",
+            str(output),
+            "--month-label-font-size",
+            "14",
+            "--month-label-color",
+            "#aabbcc",
+            "--weekday-label-font-size",
+            "12",
+            "--weekday-label-color",
+            "#112233",
+            "--label",
+            "Run",
+            "--title-font-size",
+            "16",
+            "--title-color",
+            "#334455",
+            "--legend-font-size",
+            "11",
+            "--legend-color",
+            "#556677",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    svg = output.read_text()
+    assert 'font-size="14" fill="#aabbcc"' in svg
+    assert 'font-size="12" fill="#112233"' in svg
+    assert 'font-size="16" font-weight="600" fill="#334455">Run</text>' in svg
+    assert 'font-size="11" fill="#556677">Less</text>' in svg
+
+
 def test_cli_applies_tz(tmp_path):
     csv_path = tmp_path / "events.csv"
     # Both fall on Jan 1 in America/Chicago (UTC-6), so with --tz the whole
@@ -365,3 +405,110 @@ def test_cli_reports_empty_range_without_a_traceback(tmp_path):
     assert not output.exists()
     assert "Traceback" not in result.stderr
     assert "habit-heatmap: error:" in result.stderr
+
+
+def test_cli_applies_four_exact_color_change_thresholds(tmp_path):
+    csv_path = tmp_path / "thresholds.csv"
+    csv_path.write_text(
+        "date,value\n"
+        "2024-01-01,4\n"
+        "2024-01-02,5\n"
+        "2024-01-03,20\n"
+        "2024-01-04,50\n"
+        "2024-01-05,100\n"
+    )
+    output = tmp_path / "heatmap.svg"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "habit_heatmap",
+            str(csv_path),
+            "-o",
+            str(output),
+            "--value-col",
+            "value",
+            "--steps",
+            "5,20,50,100",
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    svg = output.read_text()
+    for color in ("#ebedf0", "#9be9a8", "#40c463", "#30a14e", "#216e39"):
+        assert f'fill="{color}"' in svg
+
+
+def test_cli_rejects_a_single_step_value(tmp_path):
+    output = tmp_path / "heatmap.svg"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "habit_heatmap",
+            str(FIXTURE),
+            "-o",
+            str(output),
+            "--steps",
+            "10",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 2
+    assert not output.exists()
+
+
+@pytest.mark.parametrize(
+    "steps",
+    [
+        "0,2,3,4",
+        "-1,2,3,4",
+        "1,1,3,4",
+        "1,3,2,4",
+        "1,2,3,nan",
+        "1,2,3,inf",
+    ],
+)
+def test_cli_rejects_invalid_threshold_values(tmp_path, steps):
+    output = tmp_path / "heatmap.svg"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "habit_heatmap",
+            str(FIXTURE),
+            "-o",
+            str(output),
+            "--steps",
+            steps,
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 2
+    assert not output.exists()
+    assert "argument --steps" in result.stderr
+
+
+@pytest.mark.parametrize("steps", ["1,2,3", "1,2,3,4,5", "invalid"])
+def test_cli_rejects_malformed_threshold_arguments(tmp_path, steps):
+    output = tmp_path / "heatmap.svg"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "habit_heatmap",
+            str(FIXTURE),
+            "-o",
+            str(output),
+            "--steps",
+            steps,
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 2
+    assert not output.exists()

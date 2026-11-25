@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import sys
 from datetime import date, datetime
+from math import isfinite
 from pathlib import Path
 
 from .colors import THEMES
@@ -21,6 +22,27 @@ def iso_date(raw: str) -> date:
     a private helper's name.
     """
     return datetime.strptime(raw, "%Y-%m-%d").date()
+
+
+def parse_steps(raw: str) -> tuple[float, float, float, float]:
+    """Parse four comma-separated absolute color-change thresholds."""
+    try:
+        values = tuple(float(value.strip()) for value in raw.split(","))
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            "steps must be four comma-separated numeric thresholds (e.g. 5,20,50,100)"
+        ) from exc
+
+    if len(values) != 4:
+        raise argparse.ArgumentTypeError(
+            "steps must be exactly four comma-separated thresholds (e.g. 5,20,50,100)"
+        )
+    if not all(isfinite(value) and value > 0 for value in values):
+        raise argparse.ArgumentTypeError("steps thresholds must be positive and finite")
+    if not all(left < right for left, right in zip(values, values[1:])):
+        raise argparse.ArgumentTypeError("steps thresholds must be strictly increasing")
+
+    return values
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -57,7 +79,60 @@ def build_parser() -> argparse.ArgumentParser:
         choices=sorted(THEMES),
         help="color theme (default: github)",
     )
+    parser.add_argument(
+        "--steps",
+        type=parse_steps,
+        default=None,
+        help=(
+            "four comma-separated, positive, finite, strictly increasing absolute "
+            "intensity thresholds (default: automatic scaling)"
+        ),
+    )
     parser.add_argument("--label", default=None, help="title rendered above the chart")
+    parser.add_argument(
+        "--month-label-font-size",
+        type=float,
+        default=9,
+        help="font size for month labels in SVG units (default: 9)",
+    )
+    parser.add_argument(
+        "--month-label-color",
+        default=None,
+        help="hex color for month labels (default: automatic from theme)",
+    )
+    parser.add_argument(
+        "--weekday-label-font-size",
+        type=float,
+        default=9,
+        help="font size for weekday labels in SVG units (default: 9)",
+    )
+    parser.add_argument(
+        "--weekday-label-color",
+        default=None,
+        help="hex color for weekday labels (default: automatic from theme)",
+    )
+    parser.add_argument(
+        "--title-font-size",
+        type=float,
+        default=14,
+        help="font size for the title in SVG units (default: 14)",
+    )
+    parser.add_argument(
+        "--title-color",
+        default=None,
+        help="hex color for the title (default: automatic from theme)",
+    )
+    parser.add_argument(
+        "--legend-font-size",
+        type=float,
+        default=9,
+        help="font size for legend text in SVG units (default: 9)",
+    )
+    parser.add_argument(
+        "--legend-color",
+        default=None,
+        help="hex color for legend text (default: automatic from theme)",
+    )
     parser.add_argument(
         "--week-start",
         default="sunday",
@@ -92,6 +167,15 @@ def main(argv: list[str] | None = None) -> int:
             theme=args.theme,
             label=args.label,
             week_start=args.week_start,
+            steps=args.steps,
+            month_label_font_size=args.month_label_font_size,
+            month_label_color=args.month_label_color,
+            weekday_label_font_size=args.weekday_label_font_size,
+            weekday_label_color=args.weekday_label_color,
+            title_font_size=args.title_font_size,
+            title_color=args.title_color,
+            legend_font_size=args.legend_font_size,
+            legend_color=args.legend_color,
         )
 
         if args.output == "-":
